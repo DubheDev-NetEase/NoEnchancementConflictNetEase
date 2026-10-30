@@ -165,3 +165,41 @@ idea {
         downloadJavadoc = true
     }
 }
+
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    gameTestImplementation.extendsFrom implementation
+    gameTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+neoForge {
+    addModdingDependenciesTo(sourceSets.gameTest)
+    mods {
+        "${mod_id}_tests" {
+            sourceSet(sourceSets.gameTest)
+        }
+    }
+    runs {
+        configureEach {
+            loadedMods = [neoForge.mods.getByName(project.mod_id)]
+        }
+        gameTestServer {
+            sourceSet = sourceSets.gameTest
+            loadedMods = [neoForge.mods.getByName(project.mod_id), neoForge.mods.getByName("${project.mod_id}_tests")]
+            systemProperty 'neoforge.enabledGameTestNamespaces', "${project.mod_id}_tests"
+            gameDirectory = file('run-game-test')
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+}
+
+tasks.withType(Jar).configureEach {
+    archiveBaseName = mod_id
+    archiveVersion = "${version}-mc${minecraft_version}"
+}
